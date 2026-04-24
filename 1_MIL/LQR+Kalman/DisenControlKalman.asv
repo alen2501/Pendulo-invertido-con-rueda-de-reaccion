@@ -1,0 +1,120 @@
+% Diseño de un controlador LQR+Kalman
+%
+% Revisado el 24 de abril de 2026; Alen Garcia
+
+%% Parámetros del Modelo
+if(exist('mA','var')==0) % Para no repetir indefinidamente la carga de variables
+    % Script con parámetros del sistema
+    Parametros_Proyecto_medibles
+end
+deg_inicial=5;
+%% Comprobación de Controlabilidad y de Observabilidad
+% Obtenemos el número de estados (n=4) leyendo las filas de mA
+n_estados = size(mA, 2); 
+
+if(rank(ctrb(mA, mB)) ~= n_estados)
+    fprintf('\n¡OJO! Sistema NO CONTROLABLE!!!\n\n')
+    return
+else
+    fprintf('El sistema es CONTROLABLE.\n')
+end
+
+if(rank(obsv(mA, mC)) ~= n_estados)
+    fprintf('\n¡OJO! Sistema NO OBSERVABLE!!!\n\n')
+    return
+else
+    fprintf('El sistema es OBSERVABLE.\n\n')
+end
+
+%% Diseño del controlador LQR
+% Q (Castigo del estado) y R (Castigo de energía)
+% Regla de Bryson: La regla dice que el peso óptimo es la inversa del 
+% cuadrado del máximo valor tolerable para esa variable.
+
+%Maximo de 10 grados en theta
+max_theta = 2 * (pi / 180);%
+q1= 1/(max_theta^2);     
+% Maximo 5 grad/s en theta
+max_vel = 5 * (pi / 180);
+q2= 1/(max_vel^2);      
+% Maximo 4000 rpm en wr
+max_wr = 4000 * (2*pi / 60);
+q3= 1/(max_wr^2);     
+% Maximo 2A en ia
+max_ia = 2;
+q4= 1/(max_ia^2);    
+% Maximo 12 V en va
+va_max = 12;
+r1=1/(va_max^2);
+
+%  Sintonización basada en la Regla de Bryson
+Q = diag([q1, q2, q3,q4]);    % Pesos de: [theta, theta', wr]
+R = r1;                       % Peso del Voltaje
+
+% Cálculo de la ganancia K
+K = lqr(mA, mB, Q, R);
+
+% Comprobación de estabilidad (Polos en Lazo Cerrado)
+polos_lc = eig(mA - mB*K)
+disp('Polos del sistema controlado:');
+disp(polos_lc);
+
+%% Periodo de muestreo
+% Criterio teniendo en cuenta pd(1)
+w_max_lc = max([abs(imag(polos_lc)); abs(real(polos_lc))]);
+h_recomendado = (2*pi) / (w_max_lc * 20);
+
+fprintf('Criterio de muestreo:\n')
+fprintf('  Frecuencia dominante : %.1f rad/s\n', w_max_lc)
+fprintf('  h recomendado        : %.5f s  (%.0f Hz mínimo)\n', ...
+        h_recomendado, 1/h_recomendado)
+
+% NOTA: Si La es pequeña (τ_e = La/Ra = 0.5 ms), el polo eléctrico
+% exige h ≤ 0.0002 s. Comprueba siempre el warning de abajo.
+h = 0.001;   % [s] — ajustar si el warning se activa
+
+if h > h_recomendado
+    warning(['h = %.4f s SUPERA h_recomendado = %.5f s.\n' ...
+             'Riesgo de aliasing. Reduce h o simplifica el modelo ' ...
+             '(3 estados, despreciando La).'], h, h_recomendado)
+else
+    fprintf('  h = %.4f s cumple el criterio.\n', h)
+end
+fprintf('\n')
+%% Discretización del Modelo de Control
+PlantaD=c2d(ss(mA,mB,mC,mD),h,'zoh');
+mG=PlantaD.A; mH=PlantaD.B;
+% Alternativamente, de acuerdo a las expresiones de las transparencias del tema
+% mG=expm(mA*h); syms t; mH=double(int(expm(mA*t)*mB, t, 0, h));
+
+%% Ganancia del control por realimentación de estados
+Kd=dlqr(mG,mH,Q,R);
+
+% Comprobación de estabilidad (Polos en Lazo Cerrado)
+disp('Polos del sistema controlado:');
+disp(eig(mG - mH*Kd));
+
+fprintf('K  continuo: '); disp(K)
+fprintf('Kd discreto: '); disp(Kd)
+
+%% Filtro de Kalman
+
+%Matrices de covarianza (Ruido)
+% Q_kalman: Confianza en tu modelo matemático (4x4)
+Q_kalman = diag([1e-4, 1e-4, 1e-4, 1e-4]); 
+
+% R_kalman: Confianza en tus sensores (2x2)
+R_kalman = diag([1e-2, 1e-2]); 
+
+%Cálculo de la ganancia del filtro de Kalman Discreto (L)
+% Asumimos que el ruido del proceso afecta directamente a los 4 estados (eye(4))
+[L_kalman, P, E] = dlqe(mG, eye(4), mC_medido, Q_kalman, R_kalman);
+
+fprintf('\nGanancia de Kalman discreta (L):\n');
+disp(L_kalman)
+
+% 4. Comprobación de estabilidad del observador
+% Los polos del estimador deben ser más rápidos que los del controlador LQR
+polos_obs = eig(mG - L_kalman*mC_medido);
+disp('Polos del Observador (deben estar dentro del círculo unidad):');
+disp(abs(polos_obs));
