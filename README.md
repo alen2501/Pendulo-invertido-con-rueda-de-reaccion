@@ -41,13 +41,15 @@ $$\hat{x}(k+1) = (G - L_d C_{med})\hat{x}(k) + [H, L_d] \begin{bmatrix} u(k) \\ 
 
 ## 🚀 Hoja de Ruta (Roadmap MBD)
 
+## 🚀 Hoja de Ruta (Roadmap MBD)
+
 - [x] **Fase 1: Modelado Matemático.** Derivación de inercias, linealización y comprobación de controlabilidad/observabilidad.
 - [x] **Fase 2: Model-in-the-Loop (MIL).** Simulación matemática ideal en PC (Planta + LQR + Kalman + Ruido Blanco).
 - [ ] **Fase 3: Software-in-the-Loop (SIL).** Separación de bloques lógicos y generación de código C/C++ del controlador.
 - [ ] **Fase 4: Processor-in-the-Loop (PIL).** Ejecución del algoritmo en la STM32 interactuando con la planta virtual.
-- [ ] **Fase 5: Hardware-in-the-Loop (HIL) y Despliegue Físico.** Compensación de zonas muertas y validación con el hardware real.
-- [ ] **Fase 6: Seguimiento de Objetivos (Visual Computing).** Implementación de algoritmos de visión artificial para identificar un objetivo y orientar el eje del sistema hacia él (Target Tracking).
-- [ ] **Fase 7: Navegación Autónoma Avanzada.** Fusión de datos para misiones de apuntado y mantenimiento de actitud compleja.
+- [ ] **Fase 5: Hardware-in-the-Loop (HIL).** Validación del controlador y gestión de entradas/salidas (I/O) conectado a la planta virtual.
+- [ ] **Fase 6: Despliegue Físico.** Implementación final, compensación de zonas muertas (backlash) y validación con la planta real.
+- [ ] **Fase 7: Seguimiento de Objetivos (Visual Computing).** Implementación de algoritmos de visión artificial para identificar un objetivo y orientar el eje del sistema (Target Tracking).
 
 ## ⚙️ Tecnologías Utilizadas
 
