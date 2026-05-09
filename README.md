@@ -41,8 +41,6 @@ $$\hat{x}(k+1) = (G - L_d C_{med})\hat{x}(k) + [H, L_d] \begin{bmatrix} u(k) \\ 
 
 ## 🚀 Hoja de Ruta (Roadmap MBD)
 
-## 🚀 Hoja de Ruta (Roadmap MBD)
-
 - [x] **Fase 1: Modelado Matemático.** Derivación de inercias, linealización y comprobación de controlabilidad/observabilidad.
 - [x] **Fase 2: Model-in-the-Loop (MIL).** Simulación matemática ideal en PC (Planta + LQR + Kalman + Ruido Blanco).
 - [ ] **Fase 3: Software-in-the-Loop (SIL).** Separación de bloques lógicos y generación de código C/C++ del controlador.
