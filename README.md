@@ -33,9 +33,7 @@ $$\hat{x}(k+1) = (G - L_d C_{med})\hat{x}(k) + [H, L_d] \begin{bmatrix} u(k) \\ 
 
 ## 📊 Resultados: Model-in-the-Loop (MIL)
 
-*(Recuerda subir las imágenes a una carpeta 'img' en este repositorio y usar rutas relativas)*
-
-![Esquema Simulink](img/esquema_simulink_MIL.png)
+![Esquema Simulink](img/esquema_simulink_MIL.PNG)
 *Arquitectura del controlador y observador implementada en Simulink.*
 
 ![Gráfica Convergencia](img/grafica_theta.png)
