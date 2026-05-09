@@ -1,6 +1,6 @@
 % Diseño de un controlador LQR+Kalman
 %
-% Revisado el 24 de abril de 2026; Alen Garcia
+% Revisado el 8 de mayo de 2026; Alen Garcia
 
 %% Parámetros del Modelo
 if(exist('mA','var')==0) % Para no repetir indefinidamente la carga de variables
@@ -31,24 +31,24 @@ end
 % Regla de Bryson: La regla dice que el peso óptimo es la inversa del 
 % cuadrado del máximo valor tolerable para esa variable.
 
-%Maximo de 2 grados en theta
-max_theta = 2 * (pi / 180);%
+%Maximo de 10 grados en theta
+max_theta = 10 * (pi / 180);%
 q1= 1/(max_theta^2);     
 % Maximo 5 grad/s en theta
 max_vel = 5 * (pi / 180);
 q2= 1/(max_vel^2);      
-% Maximo 4000 rpm en wr
-max_wr = 4000 * (2*pi / 60);
+% Maximo 1000 rpm en wr
+max_wr = 1000 * (2*pi / 60);
 q3= 1/(max_wr^2);     
 % Maximo 2A en ia
 max_ia = 2;
 q4= 1/(max_ia^2);    
 % Maximo 12 V en va
-va_max = 12;
+va_max = 1; % se limita mucho va para evitar oscilaciones gigantes
 r1=1/(va_max^2);
 
 %  Sintonización basada en la Regla de Bryson
-Q = diag([q1, q2, q3,q4]);    % Pesos de: [theta, theta', wr]
+Q = diag([q1, q2, q3,q4]);    % Pesos de: [theta, theta', wr, ia]
 R = r1;                       % Peso del Voltaje
 
 % Cálculo de la ganancia K
@@ -103,11 +103,11 @@ fprintf('Kd discreto: '); disp(Kd)
 mC_medido = [1, 0, 0, 0;  % Sensor 1: IMU (theta)
              0, 0, 1, 0]; % Sensor 2: Encoder (wr)
 
-q_val = 1e-3; % Ruido del modelo
-r_val = 1e-3; % Ruido de los sensores
+% Aumentamos un poco la confianza en el modelo
+Q_kalman = diag([1e-4, 1e-4, 1e-3, 1e-4]); 
 
-Q_kalman = diag([q_val, q_val, q_val, q_val]); 
-R_kalman = diag([r_val, r_val]); 
+% Reducimos un poco la desconfianza en los sensores
+R_kalman = diag([1e-3, 1e-2]);
 
 % 1. Calculamos la ganancia del filtro
 [Ld ~, ~] = dlqe(mG, eye(4), mC_medido, Q_kalman, R_kalman);

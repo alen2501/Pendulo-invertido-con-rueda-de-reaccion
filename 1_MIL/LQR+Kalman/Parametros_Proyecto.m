@@ -8,44 +8,42 @@
 
 clc; clear; close all;
 
-%% 1. PARÁMETROS FÍSICOS
+%% 1. PARÁMETROS FÍSICOS (Inspirado en el Paper del ITBA)
 g  = 9.81;           % Constante gravitatoria [m/s^2]
 
-% --- La Barra ---
-mb = 0.2;            % Masa de la barra [kg]
-L_barra = 0.2;       % Longitud total de la barra [m]
-lb = L_barra / 2;    % Distancia del pivote al Centro de Masa de la barra [m]
+% --- La Barra (Plástico 3D, ligero y corto como recomienda el paper) ---
+mb = 0.06;           % 60 gramos (PLA/PETG con poco relleno)
+L_barra = 0.20;      % 20 centímetros (Similar a los 20.7 cm del paper)
+lb = L_barra / 2;    % Centro de masa de la barra
 
-% --- El Motor  ---
-mm = 0.15;           % Masa del estator del motor [kg]
-L  = L_barra;        % Distancia del pivote al motor [m]
+% --- El Motor (Ej: Pololu #4842 con reductora ~10:1) ---
+mm = 0.095;          % 95 gramos 
+L  = L_barra;        % Montado arriba
 
-% --- La Rueda de Reacción ---
-mr = 0.1;            % Masa de la rueda [kg]
-radio_rueda = 0.05;  % Radio geométrico de la rueda [m]
+% --- La Rueda de Reacción (Impresa 3D + Tuercas en el borde exterior) ---
+mr = 0.12;           % 120 gramos (30g plástico + 90g de tuercas metálicas en el borde)
+radio_rueda = 0.08;  % 8 centímetros de radio (16 cm de diámetro total)
 
-% --- Parámetros Eléctricos del Motor ---
-Ra = 2.0;            % Resistencia de inducido [ohm]
-La = 0.001;          % Inductancia de inducido [H]
-kt = 0.05;           % Constante de par [N·m/A]
-kb = 0.05;           % Constante de fuerza contraelectromotriz [V/(rad/s)]
+% --- Parámetros Eléctricos del Motor (Con Reductora) ---
+Ra = 2.4;            % Resistencia de inducido [ohm]
+La = 0.001;          % Inductancia [H]
+% Al tener reductora ~10:1, el par se multiplica por 10 y la velocidad baja.
+kt = 0.075;          % Constante de par multiplicada por la reductora [N·m/A]
+kb = 0.11;           % Constante contraelectromotriz [V/(rad/s)]
 
-%% 2. CÁLCULO DE INERCIAS Y MOMENTOS
-% Inercia de la rueda respecto a su PROPIO eje de rotación (Disco macizo)
-Ir = (1/2) * mr * radio_rueda^2; 
+%% 2. CÁLCULO DE INERCIAS (Modificado para rueda tipo anillo)
+% El paper demuestra que la masa debe ir en el borde. 
+% La inercia de un anillo es M*R^2 (el doble que un disco macizo 1/2*M*R^2)
+Ir = mr * radio_rueda^2; 
 
 % Inercias respecto al PIVOTE base (Teorema de Steiner)
-Ib_pivote = (1/3) * mb * L_barra^2;  % Inercia de la barra desde su extremo
-Im_pivote = mm * L^2;                % Inercia del estator trasladado al pivote
-Ir_pivote = mr * L^2;                % Inercia de la rueda trasladada al pivote (como masa puntual)
+Ib_pivote = (1/3) * mb * L_barra^2;  
+Im_pivote = mm * L^2;                
+Ir_pivote = mr * L^2;                
 
-% Inercia Total del sistema respecto al pivote (J)
+% Inercia Total y Momento Gravitatorio
 J = Ib_pivote + Im_pivote + Ir_pivote;
-
-% Momento Gravitatorio estático total equivalente (Mg)
-% Suma de (Masa * Distancia al pivote) de cada elemento
 Mg = (mb * lb) + (mm * L) + (mr * L);
-
 %% 3. MODELO EN ESPACIO DE ESTADOS
 % Vector de estados: x = [theta, theta', wr, ia]'
 % Vector de entrada: u = [va]'
