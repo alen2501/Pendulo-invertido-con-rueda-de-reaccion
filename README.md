@@ -37,7 +37,7 @@ $$\hat{x}(k+1) = (G - L_d C_{med})\hat{x}(k) + [H, L_d] \begin{bmatrix} u(k) \\ 
 *Arquitectura del controlador y observador implementada en Simulink.*
 
 ![Gráfica Convergencia](img/grafica_theta.png)
-*Filtrado y estimación del ángulo de inclinación $\theta$ frente al ruido inyectado.*
+*Filtrado y estimación del ángulo de inclinación theta frente al ruido inyectado.*
 
 ## 🚀 Hoja de Ruta (Roadmap MBD)
 
