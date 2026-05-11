@@ -1,13 +1,14 @@
-% Diseño de un controlador LQR
+% Diseño de un controlador LQR+Kalman
 %
-% Revisado el 21 de abril de 2026; Alen Garcia
+% Revisado el 11 de mayo de 2026; Alen Garcia
 
 %% Parámetros del Modelo
 if(exist('mA','var')==0) % Para no repetir indefinidamente la carga de variables
     % Script con parámetros del sistema
     Parametros_Proyecto
+    mA=mA_con; mB=mB_con; mC=mC_con; mD=mD_con;
 end
-deg_inicial=5;
+deg_inicial=15;
 %% Comprobación de Controlabilidad y de Observabilidad
 % Obtenemos el número de estados (n=4) leyendo las filas de mA
 n_estados = size(mA, 2); 
@@ -32,24 +33,21 @@ end
 % cuadrado del máximo valor tolerable para esa variable.
 
 %Maximo de 10 grados en theta
-max_theta = 2 * (pi / 180);%
+max_theta = 10 * (pi / 180);%
 q1= 1/(max_theta^2);     
 % Maximo 5 grad/s en theta
 max_vel = 5 * (pi / 180);
 q2= 1/(max_vel^2);      
-% Maximo 4000 rpm en wr
-max_wr = 4000 * (2*pi / 60);
-q3= 1/(max_wr^2);     
-% Maximo 2A en ia
-max_ia = 2;
-q4= 1/(max_ia^2);    
+% Maximo 1000 rpm en wr
+max_wr = 1000 * (2*pi / 60);
+q3= 1/(max_wr^2);        
 % Maximo 12 V en va
-va_max = 12;
+va_max = 1; % se limita mucho va para evitar oscilaciones gigantes
 r1=1/(va_max^2);
 
 %  Sintonización basada en la Regla de Bryson
-Q = diag([q1, q2, q3,q4]);    % Pesos de: [theta, theta', wr]
-R = r1;                       % Peso del Voltaje
+Q = diag([q1, q2, q3]);    % Pesos de: [theta, theta', wr]
+R = r1;                    % Peso del Voltaje
 
 % Cálculo de la ganancia K
 K = lqr(mA, mB, Q, R);
@@ -69,9 +67,7 @@ fprintf('  Frecuencia dominante : %.1f rad/s\n', w_max_lc)
 fprintf('  h recomendado        : %.5f s  (%.0f Hz mínimo)\n', ...
         h_recomendado, 1/h_recomendado)
 
-% NOTA: Si La es pequeña (τ_e = La/Ra = 0.5 ms), el polo eléctrico
-% exige h ≤ 0.0002 s. Comprueba siempre el warning de abajo.
-h = 0.001;   % [s] — ajustar si el warning se activa
+h = 0.0001;   % [s] — ajustar si el warning se activa
 
 if h > h_recomendado
     warning(['h = %.4f s SUPERA h_recomendado = %.5f s.\n' ...
@@ -96,3 +92,41 @@ disp(eig(mG - mH*Kd));
 
 fprintf('K  continuo: '); disp(K)
 fprintf('Kd discreto: '); disp(Kd)
+
+%% Filtro de Kalman
+
+% Extraemos solo las filas que corresponden a sensores reales (theta y wr)
+mC_medido = [1, 0, 0;  % Sensor 1: IMU (theta)
+             0, 0, 1]; % Sensor 2: Encoder (wr)
+
+% Aumentamos un poco la confianza en el modelo
+Q_kalman = diag([1e-4, 1e-4, 1e-3]); 
+
+% Reducimos un poco la desconfianza en los sensores
+R_kalman = diag([1e-3, 1e-2]);
+
+% 1. Calculamos la ganancia del filtro
+[Ld ~, ~] = dlqe(mG, eye(3), mC_medido, Q_kalman, R_kalman);
+
+% 2. Calculamos los polos EXACTOS del observador
+polos_K_exactos = eig(mG - Ld * mC_medido);
+polos_K_abs = abs(polos_K_exactos); % Sacamos la magnitud
+
+% 3. Comprobación estricta (max() de un vector 4x1 da un solo número)
+max_polo_K = max(polos_K_abs);
+max_polo_LQR = max(abs(eig(mG - mH*Kd)));
+
+disp('--- RESULTADOS DEL OBSERVADOR ---');
+fprintf('Polo más lento del LQR: %.4f\n', max_polo_LQR);
+fprintf('Polo más lento del Kalman: %.4f\n', max_polo_K);
+
+if max_polo_K >= 1
+    warning('¡EL FILTRO ES INESTABLE! (Polos >= 1). Ajusta q_val o r_val.');
+elseif max_polo_K > max_polo_LQR
+    warning('El filtro es estable, pero más LENTO que el LQR. El péndulo podría caerse.');
+else
+    disp('¡ÉXITO VERDADERO! El filtro es estable y más rápido que el controlador.');
+end
+
+disp('Magnitud de los 3 polos del Kalman (Todos deben ser < 1):');
+disp(polos_K_abs);

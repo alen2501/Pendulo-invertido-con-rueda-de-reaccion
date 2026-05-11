@@ -3,7 +3,7 @@
 % vectores de estado iniciales, x0 = x(t=0), correspondientes al
 % modelo de simulación.
 %
-% Revisado el 24 de abril de 2026; Alen Garcia
+% Revisado el 11 de mayo de 2026; Alen Garcia
 % Actualizado al Modelo Dinámico Acoplado
 
 clc; clear; close all;
@@ -44,8 +44,8 @@ Ir_pivote = mr * L^2;
 % Inercia Total y Momento Gravitatorio
 J = Ib_pivote + Im_pivote + Ir_pivote;
 Mg = (mb * lb) + (mm * L) + (mr * L);
-%% 3. MODELO EN ESPACIO DE ESTADOS
-% Vector de estados: x = [theta, theta', wr, ia]'
+
+%% 3. MODELO DE SIMULACIÓN
 % Vector de entrada: u = [va]'
 % Vector de salida:  y = [theta, theta', wr, ia]'
 
@@ -69,4 +69,36 @@ mD = [0; 0; 0; 0];
 
 % Condiciones iniciales: 
 % x(t=0) = [theta(t=0) theta'(t=0) wr(t=0) ia(t=0)]'
-x0 = [0 0 0 0]';
+x0 = [0 0 0 0]';% Vector de estados: x = [theta, theta', wr, ia]'
+
+%% 4. MODELO DE CONTROL
+% Se asume La = 0 -> ia = (va - kb*wr)/Ra
+% Vector de estados: x = [theta, theta', wr]'
+% Vector de entrada: u = [va]
+% Vector de salida:  y = [theta, theta', wr,]'
+
+% Matriz A
+mA_con = [       0, 1,                                       0;
+          (Mg*g)/J, 0,                          (kt*kb)/(J*Ra);
+         -(Mg*g)/J, 0, -((kt*kb)/(Ir*Ra)) - ((kt*kb)/(J*Ra)) ];
+
+% Matriz B
+mB_con = [                                0; 
+                                 -kt/(J*Ra); 
+          (kt/(Ir*Ra)) + (kt/(J*Ra)) ];
+
+% Matriz C
+mC_con = [    1, 0,       0;
+              0, 1,       0;
+              0, 0,       1;
+              0, 0, -kb/Ra ];
+
+% Matriz D
+mD_con = [    0; 
+              0; 
+              0; 
+           1/Ra ];
+
+% Condiciones iniciales: 
+% x_red(t=0) = [theta(t=0) theta'(t=0) wr(t=0)]'
+x0_con = [0 0 0]';
