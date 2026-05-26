@@ -67,7 +67,7 @@ fprintf('  Frecuencia dominante : %.1f rad/s\n', w_max_lc)
 fprintf('  h recomendado        : %.5f s  (%.0f Hz mínimo)\n', ...
         h_recomendado, 1/h_recomendado)
 
-h = 0.0001;   % [s] — ajustar si el warning se activa
+h = 0.001;   % [s] — ajustar si el warning se activa
 
 if h > h_recomendado
     warning(['h = %.4f s SUPERA h_recomendado = %.5f s.\n' ...
@@ -99,11 +99,14 @@ fprintf('Kd discreto: '); disp(Kd)
 mC_medido = [1, 0, 0;  % Sensor 1: IMU (theta)
              0, 0, 1]; % Sensor 2: Encoder (wr)
 
-% Aumentamos un poco la confianza en el modelo
-Q_kalman = diag([1e-4, 1e-4, 1e-3]); 
+% Q_kalman: Matriz de ruido del proceso (Diagonal: [theta, theta', wr])
+% Le metemos un ruido ASTRONÓMICO (1000) a theta' para forzar al filtro 
+% a estimar la velocidad rápidamente a partir del sensor.
+Q_kalman = diag([1e-2, 1000, 1e-1]); 
 
-% Reducimos un poco la desconfianza en los sensores
-R_kalman = diag([1e-3, 1e-2]);
+% R_kalman: Matriz de ruido de medida (Diagonal: [MPU6050, Encoder])
+% Le decimos que el MPU6050 es sagrado (1e-5) para que derive de ahí.
+R_kalman = diag([1e-5, 1e-3]);
 
 % 1. Calculamos la ganancia del filtro
 [Ld ~, ~] = dlqe(mG, eye(3), mC_medido, Q_kalman, R_kalman);
