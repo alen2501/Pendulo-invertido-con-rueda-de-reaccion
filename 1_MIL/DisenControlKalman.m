@@ -67,15 +67,8 @@ fprintf('  Frecuencia dominante : %.1f rad/s\n', w_max_lc)
 fprintf('  h recomendado        : %.5f s  (%.0f Hz mínimo)\n', ...
         h_recomendado, 1/h_recomendado)
 
-h = 0.001;   % [s] — ajustar si el warning se activa
+h = 0.001;   % [s]
 
-if h > h_recomendado
-    warning(['h = %.4f s SUPERA h_recomendado = %.5f s.\n' ...
-             'Riesgo de aliasing. Reduce h o simplifica el modelo ' ...
-             '(3 estados, despreciando La).'], h, h_recomendado)
-else
-    fprintf('  h = %.4f s cumple el criterio.\n', h)
-end
 fprintf('\n')
 %% Discretización del Modelo de Control
 PlantaD=c2d(ss(mA,mB,mC,mD),h,'zoh');
@@ -100,12 +93,9 @@ mC_medido = [1, 0, 0;  % Sensor 1: IMU (theta)
              0, 0, 1]; % Sensor 2: Encoder (wr)
 
 % Q_kalman: Matriz de ruido del proceso (Diagonal: [theta, theta', wr])
-% Le metemos un ruido ASTRONÓMICO (1000) a theta' para forzar al filtro 
-% a estimar la velocidad rápidamente a partir del sensor.
 Q_kalman = diag([1e-2, 1000, 1e-1]); 
 
-% R_kalman: Matriz de ruido de medida (Diagonal: [MPU6050, Encoder])
-% Le decimos que el MPU6050 es sagrado (1e-5) para que derive de ahí.
+% R_kalman: Matriz de ruido de medida (Diagonal: [MPU6050, Encoder]).
 R_kalman = diag([1e-5, 1e-3]);
 
 % 1. Calculamos la ganancia del filtro
@@ -124,12 +114,12 @@ fprintf('Polo más lento del LQR: %.4f\n', max_polo_LQR);
 fprintf('Polo más lento del Kalman: %.4f\n', max_polo_K);
 
 if max_polo_K >= 1
-    warning('¡EL FILTRO ES INESTABLE! (Polos >= 1). Ajusta q_val o r_val.');
+    warning('¡EL FILTRO ES INESTABLE!. Ajusta q_val o r_val.');
 elseif max_polo_K > max_polo_LQR
     warning('El filtro es estable, pero más LENTO que el LQR. El péndulo podría caerse.');
 else
-    disp('¡ÉXITO VERDADERO! El filtro es estable y más rápido que el controlador.');
+    disp('El filtro es estable y más rápido que el controlador.');
 end
 
-disp('Magnitud de los 3 polos del Kalman (Todos deben ser < 1):');
+disp('Magnitud de los 3 polos del Kalman:');
 disp(polos_K_abs);
