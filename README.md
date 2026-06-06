@@ -1,59 +1,276 @@
 # Péndulo Invertido con Rueda de Reacción
 
-> **Estado del Proyecto:** En desarrollo (Fase MIL Completada - Transición a SIL)
+![Diseño CAD RWIP](img/cad.PNG)
 
-Este repositorio contiene el desarrollo, simulación e implementación de las leyes de control para un péndulo invertido estabilizado mediante una rueda de reacción. El proyecto se rige estrictamente por la metodología **Model-Based Design (MBD)**, abarcando desde la derivación de las ecuaciones físicas y el diseño de observadores, hasta la futura autogeneración de código C/C++ para sistemas embebidos.
+> **Estado del Proyecto:** MIL Validado | Preparando SIL y Validación Mecánica
 
-##  Objetivo del Proyecto
+Este repositorio contiene el desarrollo, simulación e implementación de las leyes de control para un péndulo invertido estabilizado mediante una rueda de reacción (*Reaction Wheel Inverted Pendulum - RWIP*). El proyecto sigue estrictamente la metodología **Model-Based Design (MBD)**, cubriendo todo el ciclo de desarrollo desde el modelado matemático y diseño de controladores hasta la futura autogeneración de código embebido para una plataforma STM32.
 
-Diseñar y validar una arquitectura GNC (Guiado, Navegación y Control) para un sistema físicamente inestable, integrando un regulador óptimo y un estimador predictivo para lidiar con el ruido de los sensores y las no linealidades de los actuadores físicos.
+---
+
+## Objetivo del Proyecto
+
+Diseñar, simular e implementar una arquitectura GNC (*Guidance, Navigation and Control*) capaz de estabilizar un sistema físicamente inestable mediante técnicas modernas de control óptimo y estimación de estados.
+
+El objetivo final es desplegar un controlador LQR junto con un Filtro de Kalman discreto sobre hardware embebido real, validando progresivamente cada etapa mediante la metodología MIL → SIL → PIL → HIL → Hardware.
+
+---
+
+## Modelo Físico
+
+El sistema se modela como un péndulo invertido de un grado de libertad accionado mediante una rueda de reacción acoplada a un motor DC.
+
+El modelo dinámico considera:
+
+- Dinámica gravitatoria del conjunto.
+- Acoplamiento entre péndulo y rueda de reacción.
+- Modelo eléctrico del motor DC.
+- Inercia equivalente de la rueda de reacción.
+- Efectos de la distribución de masas.
+- Linealización alrededor del equilibrio vertical.
+
+Las dimensiones mecánicas se han desarrollado a partir de un diseño propio inspirado en la plataforma RWIP presentada por el Instituto Tecnológico de Buenos Aires (ITBA), adaptándola a una implementación de bajo coste basada en sensores MEMS y fabricación aditiva.
+
+---
 
 ## Arquitectura de Hardware (Target)
 
 El diseño del software está condicionado por las siguientes especificaciones físicas:
 
-* **Microcontrolador:** STM32 Nucleo-F401RE (ARM Cortex-M4 con FPU).
-* **Sensor Inercial:** MPU6050 (Acelerómetro y Giroscopio por I2C).
-* **Actuador:** Motor DC JGA25-370 12V con reductora y Encoder rotativo.
-* **Etapa de Potencia:** Driver puente H BTS7960 (43A).
+| Componente | Selección |
+|------------|------------|
+| Microcontrolador | STM32 Nucleo-F401RE |
+| Sensor Inercial | MPU6050 (I2C) |
+| Actuador | Motor DC Pololu #4882 12V con reductora |
+| Sensor de velocidad | Encoder incremental |
+| Driver de potencia | BTS7960 |
+| Estructura | Impresión 3D (PLA/PETG) |
+| Eje principal | Varilla de acero Ø8 mm |
+| Rodamientos | 608ZZ |
+
+---
+
+## Diseño Mecánico
+
+La estructura está formada por:
+
+### Brazo del Péndulo
+
+- Longitud eje a eje: 207 mm
+- Fabricación mediante impresión 3D
+- Diseño optimizado para minimizar masa y maximizar rigidez
+
+### Rueda de Reacción
+
+- Diámetro exterior: 210 mm
+- Configuración tipo anillo (*hoop-like*)
+- Cuatro radios estructurales
+- Taladros perimetrales M4 para ajuste experimental de inercia
+- Distribución de masa concentrada en el perímetro
+
+### Sistema de Pivote
+
+- Eje rectificado de acero de 8 mm
+- Dos rodamientos 608ZZ
+- Diseño orientado a minimizar la fricción mecánica
+
+### CAD
+
+> Diseño preliminar del péndulo invertido con rueda de reacción desarrollado en SolidWorks. La estructura incorpora una rueda de reacción tipo anillo optimizada para maximizar la inercia, un brazo ligero fabricado mediante impresión 3D y un sistema de pivote basado en eje de acero de 8 mm y rodamientos 608ZZ. Los taladros perimetrales permiten ajustar experimentalmente la distribución de masa mediante tornillería M4.
+
+---
 
 ## Estrategia de Control y Estimación
 
-El sistema se ha linealizado alrededor de su punto de equilibrio vertical, obteniendo un modelo en espacio de estados de 4 variables: $x = [\theta, \dot{\theta}, \omega_r, i_a]^T$
+El sistema se ha linealizado alrededor de su punto de equilibrio vertical obteniendo un modelo en espacio de estados.
 
-### 1. Controlador LQR (Linear Quadratic Regulator)
+### Vector de Estado
 
-Se ha implementado un control óptimo por realimentación de estados. Las matrices de penalización $Q$ y $R$ se han sintonizado utilizando la Regla de Bryson, basándose en las tolerancias físicas máximas admisibles.
+```text
+x = [theta, theta_dot, omega_r, i_a]^T
+```
 
-### 2. Filtro de Kalman Discreto (Observador)
+donde:
 
-Dado que el sensor MPU6050 introduce ruido gaussiano, se ha implementado un Filtro de Kalman discreto para estimar el vector de estados completo. El estimador predictor se define mediante la ecuación:
+- **theta** = ángulo del péndulo
+- **theta_dot** = velocidad angular del péndulo
+- **omega_r** = velocidad angular de la rueda de reacción
+- **i_a** = corriente de armadura
 
-$$\hat{x}(k+1) = (G - L_d C_{med})\hat{x}(k) + [H, L_d] \begin{bmatrix} u(k) \\ y_{med}(k) \end{bmatrix}$$
+---
 
-## Resultados: Model-in-the-Loop (MIL)
+### Controlador LQR
 
-![Esquema Simulink](img/esquema_simulink_MIL.PNG)
-*Arquitectura del controlador y observador implementada en Simulink.*
+Se implementa un regulador cuadrático lineal (*Linear Quadratic Regulator*) diseñado a partir de la Regla de Bryson.
 
-![Gráfica Convergencia](img/grafica_theta.png)
-*Filtrado y estimación del ángulo de inclinación theta frente al ruido inyectado.*
+La función de coste minimizada es:
 
-## Hoja de Ruta (Roadmap MBD)
+```text
+J = ∫ (xᵀQx + uᵀRu) dt
+```
 
-- [x] **Fase 1: Modelado Matemático.** Derivación de inercias, linealización y comprobación de controlabilidad/observabilidad.
-- [x] **Fase 2: Model-in-the-Loop (MIL).** Simulación matemática ideal en PC (Planta + LQR + Kalman + Ruido Blanco).
-- [ ] **Fase 3: Software-in-the-Loop (SIL).** Separación de bloques lógicos y generación de código C/C++ del controlador.
-- [ ] **Fase 4: Processor-in-the-Loop (PIL).** Ejecución del algoritmo en la STM32 interactuando con la planta virtual.
-- [ ] **Fase 5: Hardware-in-the-Loop (HIL).** Validación del controlador y gestión de entradas/salidas (I/O) conectado a la planta virtual.
-- [ ] **Fase 6: Despliegue Físico.** Implementación final, compensación de zonas muertas (backlash) y validación con la planta real.
-- [ ] **Fase 7: Seguimiento de Objetivos (Visual Computing).** Implementación de algoritmos de visión artificial para identificar un objetivo y orientar el eje del sistema (Target Tracking).
+donde:
+
+- **Q** penaliza las desviaciones de los estados.
+- **R** penaliza el esfuerzo de control aplicado por el actuador.
+
+---
+
+### Filtro de Kalman Discreto
+
+Las medidas proporcionadas por el MPU6050 y el encoder contienen ruido e incertidumbre.
+
+Para reconstruir el estado completo del sistema se implementa un observador basado en Filtro de Kalman discreto.
+
+La ecuación de predicción utilizada es:
+
+```text
+x_hat(k+1) =
+(G - Ld·Cmed)·x_hat(k)
++
+[H  Ld]·[u(k); ymed(k)]
+```
+
+donde:
+
+- **Ld** es la ganancia del observador.
+- **G** y **H** son las matrices discretizadas del sistema.
+- **ymed(k)** representa las medidas procedentes del MPU6050 y del encoder.
+
+---
+
+## Resultados: Model-In-The-Loop (MIL)
+
+### Arquitectura Simulink
+
+![Arquitectura Simulink](img/esquema_simulink_MIL.PNG)
+
+*Implementación del controlador LQR, observador de Kalman y planta simulada.*
+
+---
+
+### Estimación de Estados
+
+![Estimación de Theta](img/grafica_theta.png)
+
+*Comparación entre la señal real, la señal ruidosa y la estimación obtenida mediante el Filtro de Kalman.*
+
+---
+
+## Metodología Model-Based Design
+
+El desarrollo sigue una estrategia incremental de validación.
+
+### Fase 1 — Modelado Matemático
+
+- [x] Derivación del modelo dinámico
+- [x] Cálculo de inercias
+- [x] Linealización
+- [x] Verificación de controlabilidad
+- [x] Verificación de observabilidad
+
+### Fase 2 — Model-In-The-Loop (MIL)
+
+- [x] Simulación de la planta
+- [x] Diseño LQR
+- [x] Diseño del Filtro de Kalman
+- [x] Validación funcional en MATLAB/Simulink
+
+### Fase 3 — Software-In-The-Loop (SIL)
+
+- [ ] Generación automática de código C/C++
+- [ ] Verificación funcional del código generado
+
+### Fase 4 — Processor-In-The-Loop (PIL)
+
+- [ ] Ejecución del algoritmo en STM32
+- [ ] Comparación con resultados MIL/SIL
+
+### Fase 5 — Hardware-In-The-Loop (HIL)
+
+- [ ] Integración de periféricos reales
+- [ ] Validación de entradas/salidas
+- [ ] Pruebas de tiempo real
+
+### Fase 6 — Despliegue Físico
+
+- [ ] Integración mecánica completa
+- [ ] Calibración del MPU6050
+- [ ] Compensación de fricción
+- [ ] Compensación de backlash
+- [ ] Estabilización del prototipo físico
+
+---
+
+## Líneas Futuras
+
+Una vez completado el sistema RWIP se estudiarán extensiones orientadas a robótica autónoma:
+
+- Seguimiento visual de objetivos mediante OpenCV.
+- Integración con sistemas de telemetría IoT.
+- Desarrollo de un Gemelo Digital conectado a la nube.
+- Implementación de algoritmos avanzados de navegación y guiado.
+
+---
 
 ## Tecnologías Utilizadas
 
-* MATLAB / Simulink (Control Systems Toolbox, Embedded Coder)
-* OpenCV / Python (Para la fase de Visual Computing)
-* C/C++
+### Modelado y Control
+
+- MATLAB
+- Simulink
+- Control System Toolbox
+- Simulink Control Design
+
+### Sistemas Embebidos
+
+- Embedded Coder
+- STM32CubeIDE
+- STM32 HAL
+
+### Diseño Mecánico
+
+- SolidWorks
+- Fabricación aditiva (FDM)
+
+### Desarrollo Software
+
+- C
+- C++
+- Python
+
+### Visión Artificial (Futuro)
+
+- OpenCV
 
 ---
-**Autor:** Alen Garcia | Ingeniero en Electrónica Industrial y Automática
+
+## Referencias
+
+[1] Belascueny, G., Aguilar, N.
+
+**Design, Modeling and Control of a Reaction Wheel Balanced Inverted Pendulum**
+
+Instituto Tecnológico de Buenos Aires (ITBA).
+
+[2] Franklin, G. F., Powell, J. D., Emami-Naeini, A.
+
+**Feedback Control of Dynamic Systems**
+
+Pearson.
+
+[3] Grewal, M. S., Andrews, A. P.
+
+**Kalman Filtering: Theory and Practice Using MATLAB**
+
+Wiley.
+
+---
+
+## Autor
+
+**Alen Garcia**
+
+Ingeniero en Electrónica Industrial y Automática
+
+Proyecto — Control Óptimo y Sistemas Embebidos mediante Model-Based Design
