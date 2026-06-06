@@ -42,11 +42,11 @@ q2= 1/(max_vel^2);
 max_wr = 1000 * (2*pi / 60);
 q3= 1/(max_wr^2);        
 % Maximo 12 V en va
-va_max = 1; % se limita mucho va para evitar oscilaciones gigantes
+va_max = 6; % se limita mucho va para evitar oscilaciones gigantes
 r1=1/(va_max^2);
 
 %  Sintonización basada en la Regla de Bryson
-Q = diag([q1, q2, q3]);    % Pesos de: [theta, theta', wr]
+Q = diag([q1, q2/10, q3]);    % Pesos de: [theta, theta', wr]
 R = r1;                    % Peso del Voltaje
 
 % Cálculo de la ganancia K
@@ -93,12 +93,12 @@ mC_medido = [1, 0, 0;  % Sensor 1: IMU (theta)
              0, 0, 1]; % Sensor 2: Encoder (wr)
 
 % Q_kalman: Matriz de ruido del proceso (Diagonal: [theta, theta', wr])
-Q_kalman = diag([1e-2, 1000, 1e-1]); 
+Q_kalman = diag([1e-2 1e-1 1e-1]);
 
 % R_kalman: Matriz de ruido de medida (Diagonal: [MPU6050, Encoder]).
 R_kalman = diag([1e-5, 1e-3]);
 
-% 1. Calculamos la ganancia del filtro
+% 1. Calculamos la ganancia delc filtro
 [Ld ~, ~] = dlqe(mG, eye(3), mC_medido, Q_kalman, R_kalman);
 
 % 2. Calculamos los polos EXACTOS del observador
