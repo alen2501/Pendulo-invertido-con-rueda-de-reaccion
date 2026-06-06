@@ -192,7 +192,7 @@ donde:
 
 ![Estimación de Theta](img/grafica_theta.png)
 
-*Comparación entre la señal real, la señal ruidosa y la estimación obtenida mediante el Filtro de Kalman.*
+*Comparación entre la señal real y la estimación obtenida mediante el Filtro de Kalman.*
 
 ---
 
