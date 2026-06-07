@@ -5,7 +5,7 @@
 %% Parámetros del Modelo
 if(exist('mA','var')==0) % Para no repetir indefinidamente la carga de variables
     % Script con parámetros del sistema
-    Parametros_Proyecto
+    Param_Project
     mA=mA_con; mB=mB_con; mC=mC_con; mD=mD_con;
 end
 deg_inicial=15;
