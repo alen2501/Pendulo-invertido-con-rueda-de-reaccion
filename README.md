@@ -201,9 +201,9 @@ donde:
 ```text
 
 ├── 01_MIL/
-│   ├── Parametros_Proyecto.m
-│   ├── Diseño_LQR_Kalman.m
-│   └── Sim_ControladorLQR_Kalman.slx
+│   ├── Param_Project.m
+│   ├── Design_LQR_Kalman.m
+│   └── RWIP_MIL.slx
 
 ├── img/
 │   ├── cad.PNG
