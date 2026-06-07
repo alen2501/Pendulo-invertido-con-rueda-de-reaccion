@@ -16,7 +16,7 @@ Este repositorio contiene el desarrollo, simulación e implementación de las le
 | Diseño LQR | ✅ |
 | Diseño Kalman | ✅ |
 | MIL (Model-In-The-Loop) | ✅ |
-| Validación Mecánica CAD | ✅ |
+| Validación Mecánica CAD | 🔄 |
 | SIL (Software-In-The-Loop) | 🔄 |
 | PIL (Processor-In-The-Loop) | ⏳ |
 | HIL (Hardware-In-The-Loop) | ⏳ |
