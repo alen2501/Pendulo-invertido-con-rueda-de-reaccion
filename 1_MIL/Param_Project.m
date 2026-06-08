@@ -3,33 +3,34 @@
 % vectores de estado iniciales, x0 = x(t=0), correspondientes al
 % modelo de simulación.
 %
-% Revisado el 11 de mayo de 2026; Alen Garcia
-% Actualizado al Modelo Dinámico Acoplado
-
+% Revisado el 06 de junio de 2026; Alen Garcia
+% Actualizado al Modelo Dinámico Acoplado y Hardware Real (DFRobot FIT0493)
 clc; clear; close all;
 
 %% 1. PARÁMETROS FÍSICOS (Inspirado en el Paper del ITBA)
 g  = 9.81;           % Constante gravitatoria [m/s^2]
 
 % --- La Barra (Plástico 3D, ligero y corto como recomienda el paper) ---
-mb = 0.06;           % 60 gramos (PLA/PETG con poco relleno)
-L_barra = 0.20;      % 20 centímetros (Similar a los 20.7 cm del paper)
+mb = 0.1;           % 100 gramos (PLA/PETG con poco relleno)
+L_barra = 0.207;      % 20 centímetros (Similar a los 20.7 cm del paper)
 lb = L_barra / 2;    % Centro de masa de la barra
 
-% --- El Motor (Ej: Pololu #4842 con reductora ~10:1) ---
-mm = 0.095;          % 95 gramos 
+% --- El Motor (DFRobot FIT0493 con reductora 34:1) ---
+mm = 0.098;          % 98 gramos (Según hoja de datos del FIT0493) 
 L  = L_barra;        % Montado arriba
 
 % --- La Rueda de Reacción (Impresa 3D + Tuercas en el borde exterior) ---
 mr = 0.12;           % 120 gramos (30g plástico + 90g de tuercas metálicas en el borde)
-radio_rueda = 0.08;  % 8 centímetros de radio (16 cm de diámetro total)
+radio_rueda = 0.105;  % 8 centímetros de radio (16 cm de diámetro total)
 
 % --- Parámetros Eléctricos del Motor (Con Reductora) ---
-Ra = 2.4;            % Resistencia de inducido [ohm]
-La = 0.001;          % Inductancia [H]
-% Al tener reductora ~10:1, el par se multiplica por 10 y la velocidad baja.
-kt = 0.075;          % Constante de par multiplicada por la reductora [N·m/A]
-kb = 0.11;           % Constante contraelectromotriz [V/(rad/s)]
+Ra = 2.18;           % Resistencia de inducido [ohm] (V/Istall = 12/5.5)
+La = 0.001;          % Inductancia [H] (Mantenemos un valor bajo típico)
+
+% Al tener reductora 34:1, consideramos los valores mecánicos equivalentes 
+% ya medidos a la salida del eje para simplificar el modelo:
+kt = 0.214;          % Constante de par multiplicada por reductora [N·m/A] (Tau_stall / I_stall)
+kb = 0.327;          % Constante contraelectromotriz [V/(rad/s)] (V / w_noload)
 
 %% 2. CÁLCULO DE INERCIAS (Modificado para rueda tipo anillo)
 % El paper demuestra que la masa debe ir en el borde. 
@@ -69,31 +70,31 @@ mD = [0; 0; 0; 0];
 
 % Condiciones iniciales: 
 % x(t=0) = [theta(t=0) theta'(t=0) wr(t=0) ia(t=0)]'
-x0 = [0 0 0 0]';% Vector de estados: x = [theta, theta', wr, ia]'
+x0 = [0 0 0 0]';
 
-%% 4. MODELO DE CONTROL
-% Se asume La = 0 -> ia = (va - kb*wr)/Ra
+%% 4. MODELO DE CONTROL (Observador de Kalman y LQR)
+% Se asume La = 0 -> ia = (va - kb*wr)/Ra (Ecuación puramente algebraica)
 % Vector de estados: x = [theta, theta', wr]'
 % Vector de entrada: u = [va]
-% Vector de salida:  y = [theta, theta', wr,]'
+% Vector de salida:  y = [theta, theta', wr]'
 
-% Matriz A
+% Matriz A reducida
 mA_con = [       0, 1,                                       0;
           (Mg*g)/J, 0,                          (kt*kb)/(J*Ra);
          -(Mg*g)/J, 0, -((kt*kb)/(Ir*Ra)) - ((kt*kb)/(J*Ra)) ];
 
-% Matriz B
+% Matriz B reducida
 mB_con = [                                0; 
                                  -kt/(J*Ra); 
           (kt/(Ir*Ra)) + (kt/(J*Ra)) ];
 
-% Matriz C
+% Matriz C reducida
 mC_con = [    1, 0,       0;
               0, 1,       0;
               0, 0,       1;
               0, 0, -kb/Ra ];
 
-% Matriz D
+% Matriz D reducida
 mD_con = [    0; 
               0; 
               0; 

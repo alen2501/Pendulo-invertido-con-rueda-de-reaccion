@@ -1,6 +1,6 @@
 % Diseño de un controlador LQR+Kalman
 %
-% Revisado el 11 de mayo de 2026; Alen Garcia
+% Revisado el 06 de junio de 2026; Alen Garcia
 
 %% Parámetros del Modelo
 if(exist('mA','var')==0) % Para no repetir indefinidamente la carga de variables
@@ -38,8 +38,8 @@ q1= 1/(max_theta^2);
 % Maximo 5 grad/s en theta
 max_vel = 5 * (pi / 180);
 q2= 1/(max_vel^2);      
-% Maximo 1000 rpm en wr
-max_wr = 1000 * (2*pi / 60);
+% Maximo 350 rpm en wr
+max_wr = 350 * (2*pi / 60);
 q3= 1/(max_wr^2);        
 % Maximo 12 V en va
 va_max = 6; % se limita mucho va para evitar oscilaciones gigantes
