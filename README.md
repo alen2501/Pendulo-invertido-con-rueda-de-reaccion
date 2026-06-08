@@ -53,15 +53,16 @@ Las dimensiones mecánicas se han desarrollado a partir de un diseño propio ins
 
 ---
 
-# Arquitectura de Hardware (Target)
+# Arquitectura de Hardware
 
 | Componente | Selección |
 |------------|------------|
-| Microcontrolador | STM32 Nucleo-F401RE |
-| Sensor Inercial | MPU6050 (I2C) |
-| Actuador | Motor DC Pololu 25D 12V con reductora |
-| Sensor de velocidad | Encoder incremental |
-| Driver de potencia | BTS7960 |
+| Microcontrolador | STM32 NUCLEO-F446RE |
+| Sensor Inercial | Adafruit MPU6050 |
+| Actuador | DFRobot FIT0493 12V 350 RPM con encoder |
+| Sensor de velocidad | Encoder incremental integrado |
+| Driver de potencia | BTS7960 H-Bridge |
+| Alimentación laboratorio | Fuente ATX 12V mediante ATX Breakout |
 | Estructura | Impresión 3D PLA/PETG |
 | Eje principal | Varilla de acero Ø8 mm |
 | Rodamientos | 608ZZ |
@@ -77,7 +78,7 @@ La estructura está formada por:
 - Longitud eje a eje: 207 mm
 - Fabricación mediante impresión 3D
 - Diseño optimizado para minimizar masa y maximizar rigidez
-- Masa objetivo aproximada: 60 g
+- Masa aproximada: 100 g
 
 ## Rueda de Reacción
 
@@ -86,7 +87,7 @@ La estructura está formada por:
 - Cuatro radios estructurales
 - Taladros perimetrales M4 para ajuste experimental de inercia
 - Distribución de masa concentrada en el perímetro
-- Masa objetivo aproximada: 120 g
+- Masa aproximada: 120 g
 
 ## Sistema de Pivote
 
@@ -190,10 +191,40 @@ donde:
 
 ## Estimación de Estados
 
-![Estimación de Theta](img/grafica_theta.png)
+![Theta](img/grafica_theta.png)
 
-*Comparación entre la señal real y la estimación obtenida mediante el Filtro de Kalman.*
+El controlador LQR estabiliza el sistema desde una condición inicial de 15°.
+La respuesta presenta un sobreimpulso moderado y converge al equilibrio vertical en aproximadamente 3 segundos.
 
+![ThetaDot](img/grafica_theta'.png)
+
+La velocidad angular converge rápidamente a cero sin oscilaciones sostenidas, validando la estabilidad del lazo cerrado.
+
+![WheelSpeed](img/grafica_wr.png)
+
+La rueda acelera inicialmente para generar el par corrector requerido y posteriormente converge a una velocidad próxima a cero una vez alcanzado el equilibrio.
+
+![Current](img/grafica_ia.png)
+
+La corriente permanece dentro de los límites físicos del actuador.
+La máxima demanda aparece durante la fase de recuperación inicial, estabilizándose posteriormente alrededor de cero amperios.
+
+## Validación del Observador
+
+Las estimaciones obtenidas mediante el Filtro de Kalman discreto muestran una excelente concordancia con los estados reales simulados.
+
+La superposición entre señales reales y estimadas demuestra:
+
+- Correcta observabilidad del sistema.
+- Adecuada selección de matrices Q y R.
+- Ausencia de deriva significativa.
+- Convergencia rápida del observador.
+
+El observador reconstruye correctamente:
+
+- Ángulo del péndulo (θ)
+- Velocidad angular del péndulo (θ̇)
+- Velocidad de la rueda de reacción (ωr)
 ---
 
 # Estructura del Repositorio
@@ -206,9 +237,12 @@ donde:
 │   └── RWIP_MIL.slx
 
 ├── img/
-│   ├── cad.PNG
-│   ├── esquema_simulink_MIL.PNG
-│   └── grafica_theta.png
+├── cad.PNG
+├── esquema_simulink_MIL.PNG
+├── grafica_theta.png
+├── grafica_theta'.png
+├── grafica_wr.png
+└── grafica_ia.png
 
 ```
 
@@ -297,7 +331,6 @@ El desarrollo sigue una estrategia incremental de validación.
 - [ ] Integración mecánica completa
 - [ ] Calibración del MPU6050
 - [ ] Compensación de fricción
-- [ ] Compensación de backlash
 - [ ] Estabilización del prototipo físico
 
 ---
@@ -314,6 +347,18 @@ Una vez completado el sistema RWIP se estudiarán extensiones orientadas a robó
 - Telemetria en tiempo real.
 
 ---
+
+# Coste del Prototipo
+
+| Elemento | Coste |
+|-----------|---------:|
+| STM32 NUCLEO-F446RE | 16 € |
+| Adafruit MPU6050 | 11 € |
+| DFRobot FIT0493 | 25 € |
+| BTS7960 | 10 € |
+| ATX Breakout | 14 € |
+| Material mecánico | ~15 € |
+| **Total estimado** | **≈ 90 €** |
 
 # Tecnologías Utilizadas
 
