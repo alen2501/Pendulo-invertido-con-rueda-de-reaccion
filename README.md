@@ -379,7 +379,7 @@ Consulte el archivo `LICENSE` para más información.
 
 **Alen Garcia Garrido**
 
-Ingeniero en Electrónica Industrial y Automática
+Ingeniero en Electrónica Industrial y Automatización
 
 LinkedIn:
 https://www.linkedin.com/in/alengarciaga/
