@@ -26,7 +26,7 @@ Este repositorio contiene el desarrollo, simulación e implementación de las le
 
 # Objetivo del Proyecto
 
-Diseñar, simular e implementar una arquitectura GNC (*Guidance, Navigation and Control*) capaz de estabilizar un sistema físicamente inestable mediante técnicas modernas de control óptimo y estimación de estados.
+Diseñar, simular e implementar una arquitectura de control capaz de estabilizar un sistema físicamente inestable mediante técnicas modernas de control óptimo y estimación de estados.
 
 El objetivo final es desplegar un controlador LQR junto con un Filtro de Kalman discreto sobre hardware embebido real, validando progresivamente cada etapa mediante la metodología:
 
@@ -306,11 +306,12 @@ El desarrollo sigue una estrategia incremental de validación.
 
 Una vez completado el sistema RWIP se estudiarán extensiones orientadas a robótica autónoma:
 
-- Seguimiento visual de objetivos mediante OpenCV.
-- Integración con sistemas IoT.
-- Desarrollo de un Gemelo Digital conectado a la nube.
-- Implementación de algoritmos avanzados de navegación y guiado.
-- Control robusto y adaptativo.
+- Control no lineal.
+- Controlador Swing-Up.
+- Validación del hardware.
+- Filtro de Kalman Extendido (EKF).
+- Fusion sensorial de IMU/Encoder.
+- Telemetria en tiempo real.
 
 ---
 
@@ -376,10 +377,9 @@ Consulte el archivo `LICENSE` para más información.
 
 ---
 
-# Autor
-
-**Alen Garcia**
+**Alen Garcia Garrido**
 
 Ingeniero en Electrónica Industrial y Automática
 
-Proyecto de Control Óptimo, Sistemas Embebidos y Model-Based Design.
+LinkedIn:
+https://www.linkedin.com/in/alengarciaga/
