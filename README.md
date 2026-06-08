@@ -390,7 +390,7 @@ Una vez completado el sistema RWIP se estudiarán extensiones orientadas a robó
 
 # Referencias
 
-[1] Belascueny, G., Aguilar, N.
+[1] Belascuen, G., Aguilar, N.
 
 **Design, Modeling and Control of a Reaction Wheel Balanced Inverted Pendulum**
 
