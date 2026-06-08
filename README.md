@@ -236,19 +236,19 @@ git clone https://github.com/alen2501/Pendulo-invertido-con-rueda-de-reaccion.gi
 Ejecutar:
 
 ```matlab
-Parametros_Proyecto
+Param_Project
 ```
 
 Posteriormente:
 
 ```matlab
-DisenControlKalman
+Design_LQR_Kalman
 ```
 
 ### 3. Abrir el modelo Simulink
 
 ```text
-Sim_ControladorLQR_Kalman.slx
+RWIP_MIL.slx
 ```
 
 ### 4. Ejecutar la simulación
