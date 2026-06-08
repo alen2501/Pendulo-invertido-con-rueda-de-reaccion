@@ -341,10 +341,6 @@ Una vez completado el sistema RWIP se estudiarán extensiones orientadas a robó
 - C++
 - Python
 
-## Visión Artificial (Futuro)
-
-- OpenCV
-
 ---
 
 # Referencias
